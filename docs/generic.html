@@ -1,0 +1,562 @@
+<!DOCTYPE HTML>
+<!--
+	Spatial by TEMPLATED
+	templated.co @templatedco
+	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
+-->
+<html>
+	<head>
+		<title>Deep Learning</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+				<h1><strong>Photo</strong> to Drawing</h1>
+				<nav id="nav">
+					<ul>
+						<li><a href="index.html">Intro</a></li>
+						<!--<li><a href="generic.html">D</a></li>
+						<li><a href="elements.html">Elements</a></li>-->
+					</ul>
+				</nav>
+			</header>
+
+			<a href="#menu" class="navPanelToggle"><span class="fa fa-bars"></span></a>
+
+		<!-- Main -->
+			<section id="main" class="wrapper">
+				<div class="container">
+
+					<header class="major special">
+						<h2>Photo to Drawing</h2>
+						<p>Image to image translation using generative networks</p>
+					</header>
+
+					<a href="#" class="image fit"><img src="images/head.png" alt="" /></a>
+					
+					<h2>Introduction</h2>
+					<p>Image to image translation have been a hot topic in Deep Learning recently. Not by chance, this topic call attention from specialists and the layman for its incridible results, (a good starting point containing various works are <a href="https://github.com/ycjing/Neural-Style-Transfer-Papers">here</a>). Some examples of such translation are:</p>
+					<div class="box alt center">
+						<div class="row 50% uniform">
+							<div class="12u center">
+								<h6>Image armonization</h6><a href="https://github.com/luanfujun/deep-painterly-harmonization">@luanfujun</a>
+								<span class="image fit"><img src="images/armonization.png" alt="" /></span>
+							</div>
+							
+							<div class="12u center">
+							<h6>Style transfer (Gatys technique)</h6><a href="https://github.com/ycjing/Neural-Style-Transfer-Papers">@ycjing</a></br>
+							</div>
+							<div class="4u"><span class="image fit"><img src="images/2.jpg" alt="" /></span></div>
+							<div class="4u"><span class="image fit"><img src="images/23.jpg" alt="" /></span></div>
+							<div class="4u$"><span class="image fit"><img src="images/23_s.jpg" alt="" /></span></div>
+							<!--<div class="4u"><span class="image fit"><img src="images/5.jpg" alt="" /></span></div>
+							<div class="4u"><span class="image fit"><img src="images/12_o.jpg" alt="" /></span></div>
+							<div class="4u$"><span class="image fit"><img src="images/12_s.jpg" alt="" /></span></div>-->
+						</div>
+					</div>
+					
+					<p>Those techniques aim to keep the content information from the desired image untouched while having the color and texture changed to the designed style. There are several ways of achieving it with slightly different results. Stills an open question how to decide which result is better, in general it depends of visual inspection or other meassures that are not objective or may not reflect exact the perceived quality.</p>
+					
+					<h2>Objective</h2>
+					
+					<p>For this project, given the time and resources available, we set our objective as: Transfers style from drawing to photograph restricting the set of possible images to faces. This choice was made to re-utilize the <a href="http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html">CelebA</a> from previous assigments while making it easier to evaluate the results and also the aquisition of the images to form the drawing dataset, as faces drawings are easier to acquire.</p>
+					
+					<p>Set the main objective, the next steps are:</p>
+					
+					<div class="row">
+						<div class="6u 12u$(xsmall)">
+
+							<h4>Implementation</h4>
+							<ul>
+								<li>Define the network archtecture.</li>
+								<li>Select a drawing dataset</li>
+							</ul>
+						</div>
+						<div class="6u 12u$(xsmall)">
+							<h4>Investigation</h4>
+							<ul>
+								<li>Dataset quality & quantity</li>
+								<li>Archtecture usage and drawbacks</li>
+								<li>Tuning and control</li>
+							</ul>
+
+						</div>
+					</div>
+					
+					<h2>Implementation Details</h2>
+					
+					<h3>Archtecture and code</h3>
+					
+					<p>The archtecture chosen was the <a href="https://arxiv.org/pdf/1703.10593.pdf">CycleGAN</a>. In the traditional <a href="http://papers.nips.cc/paper/5423-generative-adversarial-nets.pdf">GAN</a> design,  given two sets $A$ and $B$, the elements of set $A$ are translated to elements of set B by a generator network, $G(A) \rightarrow B$, while the discriminator network tries to distinguish from the real elements of $B$ and the translated elements $G(A)$,  $D(B) \rightarrow 1, D(G(A)) \rightarrow 0$, in a competitive fashion. In this basic design there is no control of which element of $B$ a given element of $A$ will be mapped. The CycleGAN presents a interesting design to overcome this drawback for unpaired datasets. The main idea is to have translations in both directions $G_B(A) \rightarrow B$ and $G_A(B) \rightarrow A$. This enables one to add things that are easy compute in the loss function of those networks, like the cycle consistency, going from $A$ to $B$ and back to $A$ should maps to the same element in $A$, $G_A(G_B(a)) \leftrightarrow a$ and $G_B(G_A(b)) \leftrightarrow b$, and the identity, mapping an element of $A$ in $A$ as $G_A(a) \leftrightarrow a$ and $G_B(b) \leftrightarrow b$. Together those two terms help to preserve characteristics of the original input in the output image.</p>
+					
+					<div class="box alt center">
+						<div class="row 50% uniform">
+							<div class="12u center">
+								<h6>CycleGAN</h6>
+								<span class="image fit"><img src="images/cyclegan.png" alt="" /></span>
+							</div>
+						</div>
+					</div>
+					
+					<p>This method is classified as a offline fast method, because it's training is made offline and the inference is simple and fast for new images after the training. Neverthless it need two sets $A$ and $B$ to be trained, and the final result from the translation is dependent of the entire set. Other online slow methods, which transfer style between two images may achieve a better stylization of a single image, for obvious reasons, while they need to be trained for each image, hence the "slow" categorization.</p>
+					
+					<p>The code implementation used was from <a href="https://github.com/aitorzip/PyTorch-CycleGAN">@aitorzip</a>, which the author describes as a "cleaner and less obscured" implementation of the original CycleGAN, in fact it's a well written and easy to understand code. As a side note, if one plans to run it on windows system you need to add the following line:</p>
+					<code>
+					if __name__ == '__main__':
+					</code>
+					<p>to avoid errors from the difference from <a href="https://pytorch.org/docs/stable/notes/multiprocessing.html">fork to spawn threads on windows</a>.</p></br></br>
+					 
+					<h3>Dataset</h3>
+					 
+					<p>In the original paper, the authors utilize somewhat small datasets to transfer styles, varying from about $500$ to $6000$ images. Following their usage, usually less images from reference style and more images for the ones to be stylized. From CelebA (celebrity faces) dataset we used all images($202,599$), then reduced to the first $4232$ and after removed some of them ending with $3554$, they were resized/center cropped to $128$x$128$. For the drawings dataset we selected $430$ drawings taken from <a href="https://br.pinterest.com/">@pinterest</a>. The drawing images were selected, cropped and treat by hand, and include various artistical styles and strokes, varying from realistic to cartoon/anime and line/filled. A third dataset containing $333$ drawings from <a href="https://www.instagram.com/eisakusaku/">Eisaku Kubonouchi</a> were used, with its width scaled to 128 pixels and the height scaled according to keep the aspect ratio.</p>
+					
+					<div class="box alt center">
+						<div class="row 50% uniform">
+							<div class="12u center">
+							<h6>Original - Cropped and treated</h6>
+							</div>
+							<div class="6u"><span class="image fit"><img src="images/original.jpg" alt="" /></span></div>
+							<div class="6u$"><span class="image fit"><img src="images/crop-treat.jpg" alt="" /></span></div>
+						</div>
+					</div>
+					
+					<p>All the images from the first drawing dataset were resized to have the face occupying the $128$x$128$ crop region, the ones who would not cover the entire space were painted to have a background maching with the drawing background, when possible any irrelevant detail, (like pencil, notebook details, etc), were erased. No rotation or meassured aligment were applied to the faces. The original images can be downloaded <a href="https://drive.google.com/open?id=1xqhdKhNc2sUOyivVJM4yanbVq2dGkKrF">here</a>, and the cropped from <a href="https://drive.google.com/open?id=1slx0oX3fRROxqv_AEwPUzgrAvp9goIDh">here</a>.</p>
+					
+					<div class="box alt center">
+						<div class="row 50% uniform">
+							<div class="12u center">
+								<h6>Drawings dataset</h6>
+								<span class="image fit"><img src="images/drawings.png" alt="" /></span>
+							</div>
+						</div>
+					</div>
+					
+					<p>The drawings dataset contains various unaligned faces, with varying pose, expression, tonality.</p>
+					
+					<div class="box alt center">
+						<div class="row 50% uniform">
+							<div class="12u center">
+								<h6>Eisaku dataset</h6>
+								<span class="image fit"><img src="images/eisaku2.png" alt="" /></span>
+							</div>
+						</div>
+					</div>
+					
+					<p>The eisaku dataset was added after various experiments with the others datasets, in this case for the lack of time to hand crop each image, we used the down-scaled image with random crops of $128$x$128$.</p>
+					
+					<div class="box alt center">
+						<div class="row 50% uniform">
+							<div class="12u center">
+								<h6>CelebA dataset</h6>
+								<span class="image fit"><img src="images/celeba.png" alt="" /></span>
+							</div>
+						</div>
+					</div>
+					
+					<p>The CelebA dataset, have all of it's faces aligned (nose point and eyes) and in general front facing and wide smiling with the cheek outlined. Side note: Those characteristics were perceived while training, when the results were biased toward those characteristics.</p>
+					
+					<h2>Experiments</h2>
+					
+					<p>For the following experiments, we have worked iteratively with various parts of the training process, which would help achieving the desired results with the time frame and computational power available:</p>
+					<div class="box alt center">
+						<div class="6u 12u$(xsmall)">
+							<ul>
+								<li>CelebA subset size</li>
+								<li>Removing "outliers"</li>
+								<li>Data augmentation</li>
+								<li>Learning rate and epoch</li>
+								<li>Effect of different weights of each term in the loss function</li>
+								<li>Colored vs Black&White images</li>
+							</ul>
+						</div>
+					</div>
+					
+					<h3>Environment</h3>
+					
+					<p>The experiments were made in a notebook with an i7 7700HQ, GTX 1060 6GB and 16GB RAM. The hand crop and treatment of images were made with Photoshop CC 2015, while the automatic resize/crop for other images were made with python OpenCV. The code uses PyTorch and Visdom libraries and can be easily run in the GPU. With the visdom library one can visualize the training process in real time, analyzing the output result of each iteration. When experimenting it's a handful tool.</p>
+					
+					<h3>Experiments Details</h3>
+					
+					For all experiments a liner decay of the learning rate was used, starting from epoch 1. During the training, each 5 epochs the network weights were saved, for posterior comparison. The batch size for all experiments were $2$, which was the maximum we could fit in the GPU memory. The default augmentation in the code was later changed to add rotation, more specifically pad-reflect, rotation and center crop.
+					
+					<div class="table-wrapper">
+						<table>
+							<thead>
+								<tr>
+									<th>#</th>
+									<th>Set A</th>
+									<th>Set B</th>
+									<th>Input CH.</th>
+									<th>Best Epoch</th>
+									<th>Approx Iterations</th>
+									<th>Cycle Loss W.</th>
+									<th>L. Rate</th>
+									<th>Augmentation</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr><!--original-->
+									<td>1</td>
+									<td>Drawings (430)</td>
+									<td>CelebA (202,599)</td>
+									<td>3 (color)</td>
+									<td>2</td>
+									<td>~400k</td>
+									<td>7.5</td>
+									<td>0.0002</td>
+									<td>H. flip, R. Crop</td>
+								</tr>
+								<tr><!--lr05-ep30-gd-->
+									<td>2</td>
+									<td>Drawings (430)</td>
+									<td>CelebA (4232)</td>
+									<td>3 (color)</td>
+									<td>20</td>
+									<td>85k</td>
+									<td>10.0</td>
+									<td>0.0005</td>
+									<td>H. flip, R. Crop, Rotation</td>
+								</tr>
+								<tr><!--mod-out-->
+									<td>3</td>
+									<td>Drawings (430)</td>
+									<td>CelebA (4232)</td>
+									<td>3 (color)</td>
+									<td>20</td>
+									<td>85k</td>
+									<td>15.0</td>
+									<td>0.0002</td>
+									<td>H. flip, R. Crop, Rotation</td>
+								</tr>
+								<tr><!--pb-40-->
+									<td>4</td>
+									<td>Drawings (430)</td>
+									<td>CelebA (3554)</td>
+									<td>1 (graysacale)</td>
+									<td>25</td>
+									<td>105k</td>
+									<td>15.0</td>
+									<td>0.0002</td>
+									<td>H. flip, R. Crop, Rotation</td>
+								</tr>
+								<tr><!--20w-cycle-gd-gr-->
+									<td>5</td>
+									<td>Drawings (430)</td>
+									<td>CelebA (3554)</td>
+									<td>1 (grayscale)</td>
+									<td>20</td>
+									<td>70k</td>
+									<td>20.0</td>
+									<td>0.0002</td>
+									<td>H. flip, R. Crop, Rotation</td>
+								</tr>
+								<tr><!--25w-lr02-30ep-best-->
+									<td>6</td>
+									<td>Drawings (430)</td>
+									<td>CelebA (3554)</td>
+									<td>1 (grayscale)</td>
+									<td>20</td>
+									<td>70k</td>
+									<td>25.0</td>
+									<td>0.0002</td>
+									<td>H. flip, R. Crop, Rotation</td>
+								</tr>
+								<tr><!--50ep-lr01-color-->
+									<td>7</td>
+									<td>Drawings (430)</td>
+									<td>CelebA (3554)</td>
+									<td>3 (color)</td>
+									<td>25</td>
+									<td>70k</td>
+									<td>25.0</td>
+									<td>0.0001</td>
+									<td>H. flip, R. Crop, Rotation</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					
+					<h3>Results</h3>
+					
+					<div class="box alt center">
+						<h5>Experiment 1</h5>
+						<div class="row 50% uniform">
+							<div class="2u"><span class="image fit"><img src="images/1/A/215.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/1/A/216.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/1/A/217.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/1/A/218.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/1/A/219.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/1/B/200.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/1/B/201.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/1/B/202.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/1/B/203.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/1/B/204.jpg" alt="" /></span></div>
+						</div>
+						
+						<h5>Experiment 2</h5>
+						<div class="row 50% uniform">
+							<div class="2u"><span class="image fit"><img src="images/2/A/215.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/2/A/216.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/2/A/217.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/2/A/218.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/2/A/219.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/2/B/200.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/2/B/201.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/2/B/202.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/2/B/203.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/2/B/204.jpg" alt="" /></span></div>
+						</div>
+						<h5>Experiment 3</h5>
+						<div class="row 50% uniform">
+							<div class="2u"><span class="image fit"><img src="images/3/A/215.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/3/A/216.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/3/A/217.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/3/A/218.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/3/A/219.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/3/B/200.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/3/B/201.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/3/B/202.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/3/B/203.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/3/B/204.jpg" alt="" /></span></div>
+						</div>
+						<h5>Experiment 4</h5>
+						<div class="row 50% uniform">
+							<div class="2u"><span class="image fit"><img src="images/4/A/215.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/4/A/216.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/4/A/217.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/4/A/218.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/4/A/219.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/4/B/200.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/4/B/201.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/4/B/202.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/4/B/203.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/4/B/204.jpg" alt="" /></span></div>
+						</div>
+						<h5>Experiment 5</h5>
+						<div class="row 50% uniform">
+							<div class="2u"><span class="image fit"><img src="images/5/A/215.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/5/A/216.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/5/A/217.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/5/A/218.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/5/A/219.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/5/B/200.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/5/B/201.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/5/B/202.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/5/B/203.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/5/B/204.jpg" alt="" /></span></div>
+						</div>
+						<h5>Experiment 6</h5>
+						<div class="row 50% uniform">
+							<div class="2u"><span class="image fit"><img src="images/6/A/215.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/6/A/216.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/6/A/217.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/6/A/218.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/6/A/219.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/6/B/200.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/6/B/201.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/6/B/202.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/6/B/203.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/6/B/204.jpg" alt="" /></span></div>
+						</div>
+						<h5>Experiment 7</h5>
+						<div class="row 50% uniform">
+							<div class="2u"><span class="image fit"><img src="images/7/A/215.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/7/A/216.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/7/A/217.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/7/A/218.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/7/A/219.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/7/B/200.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/7/B/201.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/7/B/202.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/7/B/203.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/7/B/204.jpg" alt="" /></span></div>
+						</div>
+					</div>
+					
+					<p>Below are the selected results for comparison. Rustic is from experiment $1$, smooth color from experiment $7$ and smooth BW from experiment $6$.</p>
+					
+					<div class="box alt center">
+						<div class="center" style="display: block;">
+							<a class="button alt" onClick="show('b1')">Original</a>
+							<a class="button alt" onClick="show('b2')">Black&White</a>
+							<a class="button alt" onClick="show('b3')">Rustic</a>
+							<a class="button alt" onClick="show('b4')">Smooth Color</a>
+							<a class="button alt" onClick="show('b5')">Smooth BW</a>
+						</div>
+						<div class="row 50% uniform">
+							<div id="b1" class="12u center  toggle">
+								<h6>Original</h6>
+								<span class="image fit"><img src="images/real.png" alt="" /></span>
+							</div>
+							<div id="b2" class="12u center toggle" style="display: none">
+								<h6>Black & White</h6>
+								<span class="image fit"><img src="images/real-pb.png" alt="" /></span>
+							</div>
+							<div id="b3" class="12u center toggle" style="display: none">
+								<h6>Rustic</h6>
+								<span class="image fit"><img src="images/rustic.png" alt="" /></span>
+							</div>
+							<div id="b4" class="12u center toggle" style="display: none" >
+								<h6>Smooth A</h6>
+								<span class="image fit"><img src="images/smooth-new.png" alt="" /></span>
+							</div>
+							
+							<div id="b5" class="12u center toggle" style="display: none">
+								<h6>Smooth B</h6>
+								<span class="image fit"><img src="images/best.png" alt="" /></span>
+							</div>
+						</div>
+					</div>
+					
+					<p>Detailed viewing of some faces (original, smooth bw, smooth color, rustic):</p>
+					
+					<div class="box alt center">
+						
+						<div class="row 50% uniform">
+							
+							<div class="12u center">
+								<h6>Face A</h6>
+								<span class="image fit"><img src="images/crop1.png" alt="" /></span>
+							</div>
+							<div class="12u center">
+								<h6>Face B</h6>
+								<span class="image fit"><img src="images/crop2.png" alt="" /></span>
+							</div>
+							
+							<div class="12u center" >
+								<h6>Face C</h6>
+								<span class="image fit"><img src="images/crop3.png" alt="" /></span>
+							</div>
+						</div>
+					</div>
+					<h3>Parameter analysis</h3>
+					
+					<h5>Datasets</h5>
+					
+					<p>Training with relative small datasets can achieve good results. Both datasets need to have a "relation" and be representative. For example, the drawings with oriental style were difficult to be translated in faces, given it's peculiarities, like hair style and big eyes. Another example is undesired patterns in the dataset. The CelebA dataset have it's faces aligned and many of them with wide smiles, when traslating drawings to real faces the network would try to fit a mouth always in the same place, even for perfil drawings. Another tendency was to change a closed mouth to a wide smile. Those examples shows how undesired patterns can be learned from the dataset.</p>
+					
+					<p>To overcome, or delay the appearing of such patterns, some actions where made: Adding rotations to the augmentation process, removing some wide smiles from the dataset. While those actions helped tho improve the results, they were not sufficient to totally overcome it. So designing a good dataset still important to train with  a few images, instead of huge datasets.</p>
+					
+					<h5>Epochs</h5>
+					
+					<p>Most of experiments were run for more epochs than their best epoch result. In general the best looking were found with 20-30 epochs for real to drawing and 25 or less for drawing to real. After those the network still decreases it's error, but the results are not visually good. We believe it's an effect of the undesired patterns in the dataset and overfitting. With a better dataset, the training could probably be run for longer and achieve more detailed images.</p>
+					
+					<h5>Image Channels</h5>
+					
+					<p>In general color images had a slightly better result for the drawings and are much more appealing for the real images, but grayscale images were more stable to variations in the brightness and contrast of the input image.</p>
+					
+					<h5>Learning rate</h5>
+					
+					<p>For the chosen learning rate decay, the learning rate was not much impactfull in the final result, but for the early stages of the training the higher LR would introduce some oscilation in the training.</p>
+					
+					<h5>Cycle Weight</h5>
+					
+					<p>The cycle weight was a key step in controlling the final result. A higher weight would keep more details from the original image. In general the weights for both $G_A$ and $G_B$, $D_A$ and $D_B$ must be equal, if for A and B the weights are different after some epochs the training diverges.</p>
+					
+					<h3> Image Analysis</h3>
+					
+					<h5>Painting vs Realistic</h5>
+					
+					<p>The effect of the cycle weight, can be clearly seen for the images below. A heigher weight keeps more from the original image, which we call here painting, while a lower weight tries to translate the image exactly into the another class, yet the end result is not good enough.</p>
+					
+					<div class="box alt center">
+						<div class="row 50% uniform">
+							<div class="6u center">
+								<h6>Painting</h6>
+								<span class="image fit"><img src="images/toColorMod.png" alt="" /></span>
+							</div>
+							<div class="6u center">
+								<h6>Realistic</h6>
+								<span class="image fit"><img src="images/toColorOriginal.png" alt="" /></span>
+							</div>
+						</div>
+					</div>
+					
+					<h5>fitting of undesired features</h5>
+					
+					<p>An example where the lack of a match between the sets ended in a ugly result is the drawing which are perfil, they could not be match, hence the network tries to reduce the error fitting a face in the most comom position. The same happens with the smile present in the CelebA dataset. After some epochs it's become a pattern which the network tries to match and ends causing artfacts in the mouth of the drawings.</p>
+					
+					<div class="box alt center">
+						<div class="row 50% uniform">
+							<div class="6u center">
+								<h6>Perfil drawings overfit</h6>
+								<span class="image fit"><img src="images/overfit.png" alt="" /></span>
+							</div>
+							<div class="6u center">
+								<h6>Mouth/Smile artifacts</h6>
+								<span class="image fit"><img src="images/overfit3.png" alt="" /></span>
+							</div>
+						</div>
+					</div>
+					
+					<h5>Training past best epoch</h5>
+					
+					<p>From left to right we have the following, 30, 35, 40, 45 and 50 epochs results for the experiment $7$. For the colorization the result tends to saturates and get darker  creating some artifacts, while for the drawing it's almost stationary. One important observation is that it holds for the cycle weight of experiment $7$, with lower weights both results keep evolving, usually to less meaningful translations.</p>
+					
+					<div class="box alt center">
+						<h5>Drawing to Real</h5>
+						<div class="row 50% uniform">
+							<div class="2u"><span class="image fit"><img src="images/evo1/30.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/evo1/35.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/evo1/40.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/evo1/45.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/evo1/50.jpg" alt="" /></span></div>
+						</div>
+						<h5>Real to drawing</h5>
+						<div class="row 50% uniform">
+							<div class="2u"><span class="image fit"><img src="images/evo2/30.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/evo2/35.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/evo2/40.jpg" alt="" /></span></div>
+							<div class="2u"><span class="image fit"><img src="images/evo2/45.jpg" alt="" /></span></div>
+							<div class="2u$"><span class="image fit"><img src="images/evo2/50.jpg" alt="" /></span></div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="container">
+					<!--<ul class="icons">
+						<li><a href="#" class="icon fa-facebook"></a></li>
+						<li><a href="#" class="icon fa-twitter"></a></li>
+						<li><a href="#" class="icon fa-instagram"></a></li>
+					</ul>-->
+					<ul class="copyright">
+						<li>&copy; Caio SOUZA</li>
+						<li>Design: <a href="http://templated.co">TEMPLATED</a></li>
+						<li>Images: <a href="http://unsplash.com">Unsplash</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+		<script type="text/x-mathjax-config">
+		  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+		</script>
+		<script>
+			function show(who) {
+				var x = document.getElementsByClassName("toggle");
+				for(var i=0; i<x.length;++i) {
+					if(x[i].id == who) {
+						x[i].style.display = "block";
+					} else {
+						x[i].style.display = "none";
+					}
+				}
+			}
+		</script>
+		<script type="text/javascript"
+		  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+		</script>
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
